@@ -11,6 +11,7 @@ from inspect import ismethod
 from urllib.parse import urlencode
 from collections import OrderedDict
 
+from edgenextapisdk import signer
 
 version = "1.0.1"
 
@@ -189,80 +190,33 @@ class Sdk:
             else:
                 raise Exception("logger object must has function: debug/info/warning/error")
 
-    def sign(self, data={}, dataFrom = ''):
-        signData = copy.deepcopy(data)
-        if "_files" in signData: del signData["_files"]
 
-        orderData = ksort(signData, dataFrom)
-        jraw = json.dumps(orderData, separators=(',', ':'))
-        base64Raw = base64.b64encode(jraw.encode('utf-8'))
-        sign = base64.b64encode(hmac.new(self._appSecert.encode('utf-8'), base64Raw, digestmod=hashlib.sha256).digest())
-        if self._oldSign:
-            return "%s.%s" % (sign.decode('utf-8'), base64Raw.decode('utf-8'))
-        else:
-            signStr = sign.decode('utf-8')
-            signReplace = signStr.replace("+", "-")
-            signReplace = signReplace.replace("/", "_")
-            return signReplace
-
-    def formatHeaders(self, headers = {}):
-        '''格式化header头'''
-        headersDict = {}
-        for row in headers:
-            headersDict[row[0]] = row[1]
-        return headersDict
-
-    def _payload(self, query = {}, postData = {}, headers = {}, dataFrom = ''):
-        '''构造payload数据, 并对数据做签名'''
-        orderQuery = {}
-        orderPostData = {}
-        if self._oldSign:
-            if dataFrom == 'get':
-                query['user_id']          = str(self._userId)
-                query['client_ip']        = self._clientIp
-                query['client_userAgent'] = self._userAgent
-                orderQuery = toOrderedDict({"body": query})
-                signData = orderQuery
-            else:
-                postData['user_id']          = self._userId
-                postData['client_ip']        = self._clientIp
-                postData['client_userAgent'] = self._userAgent
-                orderPostData = toOrderedDict({"body": postData})
-                signData = orderPostData
-            signData['algorithm'] = 'HMAC-SHA256'
-            signData['issued_at'] = str(time.time())
-            orderSignData = toOrderedDict(signData)
-            headers['X-Auth-Sign']   = self.sign(orderSignData, dataFrom)
-        else:
-            if dataFrom == 'get':
-                query['user_id']          = str(self._userId)
-                query['client_ip']        = self._clientIp
-                query['client_userAgent'] = self._userAgent
-                query['algorithm']        = 'HMAC-SHA256'
-                query['issued_at']        = str(time.time())
-            else:
-                postData['user_id']          = self._userId
-                postData['client_ip']        = self._clientIp
-                postData['client_userAgent'] = self._userAgent
-                postData['algorithm']        = 'HMAC-SHA256'
-                postData['issued_at']        = str(time.time())
-
-            query = dictValueToStr(query)
-            signData = copy.deepcopy(query)
-            for k, v in postData.items():
-                signData[k] = v
-            orderQuery = toOrderedDict(query)
-            orderPostData = toOrderedDict(postData)
-            orderSignData = toOrderedDict(signData)
-            headers['X-Auth-Sign']   = self.sign(orderSignData, dataFrom)
+    def _payload(self, api="",query = {}, postData = {}, headers = {}, dataFrom = ''):
+        """构造payload数据, 并对数据做签名"""
+        if str.lower(dataFrom) != 'get':
             headers['Content-Type']  = "application/json;charset=utf-8"
-
         headers['X-Auth-App-Id'] = self._appId
-        headers['X-Auth-Sdk-Version'] = '1.0.3'
+        headers['X-Auth-Sdk-Version'] = '2.0.0'
         headers['User-Agent']    = self._userAgent
+        headers['user_id'] = str(self._userId)
+        headers['client_ip'] = self._clientIp
+        headers['client_userAgent'] = self._userAgent
+        headers['algorithm'] = 'HMAC-SHA256'
+        headers['issued_at'] = str(time.time())
         if self._host != "": headers['HOST'] = self._host
-        headersCopy = copy.deepcopy(headers)
-        return orderQuery, orderPostData, headersCopy
+        # 签名
+        sig = signer.Signer()
+        sig.Key = self._appId
+        sig.Secret = self._appSecert
+        api = api.lstrip("/")
+        queryStr = urlencode(query)
+        api = query == "" and "%s/%s" % (self._apiPre, api) or "%s/%s?%s" % (self._apiPre, api, queryStr)
+        r = signer.HttpRequest(dataFrom, api, headers=headers)
+        r.body = ""
+        if postData:
+            r.body = json.dumps(postData)
+        sig.Sign(r)
+        return r
 
     def proxies_cfg(self):
         if self._proxy_url != "":
@@ -272,93 +226,79 @@ class Sdk:
         return proxies
 
     def get(self, api, query={}, headers={}):
-        '''GET请求'''
-        api = api.lstrip("/")
-        dataFrom = 'get'
-        orderQuery, orderPostData, headers = self._payload(query=query, headers=headers, dataFrom = dataFrom)
-        bodyQuery = url_encoder(orderQuery)
-
-        api = bodyQuery == "" and "%s/%s" % (self._apiPre, api) or "%s/%s?%s" % (self._apiPre, api, bodyQuery)
+        """GET请求"""
+        r = self._payload(api, query=query, headers=headers, dataFrom = "GET")
+        url = r.scheme + "://" + r.host + r.uri
+        requestDataStr = json.dumps({"url": url, "method": "GET", "data": {}, "headers": r.headers}, ensure_ascii=False)
+        print(requestDataStr)
         try:
-            requestDataStr = json.dumps({"url": api, "method": "GET", "data": {}, "headers": headers}, ensure_ascii=False)
-            result = requests.get(api, headers=headers, proxies=self.proxies_cfg())
+            result = requests.get(url, headers=r.headers, proxies=self.proxies_cfg())
             return self.parseResponse({"body":result.text, "http_code":result.status_code, "error":""}, requestDataStr)
         except Exception as e:
             return "", 0, str(e)
 
     def post(self, api, query={}, postData={}, headers={}, files={}):
-        '''POST请求'''
+        """POST请求"""
         api = api.lstrip("/")
-        orderQuery, orderPostData, headers = self._payload(query=query, postData = postData, headers = headers)
-        bodyQuery = url_encoder(orderQuery)
-
-        api = bodyQuery == "" and "%s/%s" % (self._apiPre, api) or "%s/%s?%s" % (self._apiPre, api, bodyQuery)
+        r = self._payload(api, query=query, postData = postData, headers = headers, dataFrom = "POST")
+        url = r.scheme + "://" + r.host + r.uri
         try:
-            requestDataStr = json.dumps({"url": api, "method": "GET", "data": {}, "headers": headers}, ensure_ascii=False)
+            requestDataStr = json.dumps({"url": url, "method": "POST", "data": {}, "headers": r.headers}, ensure_ascii=False)
             if self._oldSign:
-                result = requests.post(api, data=orderPostData, headers=headers, files=files, proxies=self.proxies_cfg())
+                result = requests.post(url, data=r.body, headers=r.headers, files=files, proxies=self.proxies_cfg())
             elif files:
-                del headers['Content-Type']
-                result = requests.post(api, data=orderPostData, headers=headers, files=files, proxies=self.proxies_cfg())
+                del r.headers['Content-Type']
+                result = requests.post(url, data=r.body, headers=r.headers, files=files, proxies=self.proxies_cfg())
             else:
-                result = requests.post(api, json=orderPostData, headers=headers, proxies=self.proxies_cfg())
+                result = requests.post(url, data=r.body, headers=r.headers, proxies=self.proxies_cfg())
             return self.parseResponse({"body":result.text, "http_code":result.status_code, "error":""}, requestDataStr)
         except Exception as e:
             return "", 0, str(e)
 
     def patch(self, api, query = {}, postData={}, headers = {}):
-        '''PATCH请求'''
-        api = api.lstrip("/")
-        orderQuery, orderPostData, headers = self._payload(query=query, postData = postData, headers = headers)
-        bodyQuery = url_encoder(orderQuery)
-
-        api = bodyQuery == "" and "%s/%s" % (self._apiPre, api) or "%s/%s?%s" % (self._apiPre, api, bodyQuery)
+        """PATCH请求"""
+        r = self._payload(api, query=query, postData = postData, headers = headers, dataFrom = "PATCH")
+        url = r.scheme + "://" + r.host + r.uri
         try:
-            requestDataStr = json.dumps({"url": api, "method": "GET", "data": {}, "headers": headers}, ensure_ascii=False)
+            requestDataStr = json.dumps({"url": url, "method": "patch", "data": {}, "headers": r.headers}, ensure_ascii=False)
             if self._oldSign:
-                result = requests.patch(api, data=orderPostData, headers=headers, proxies=self.proxies_cfg())
+                result = requests.patch(url, data=r.body, headers=r.headers, proxies=self.proxies_cfg())
             else:
-                result = requests.patch(api, json=orderPostData, headers=headers, proxies=self.proxies_cfg())
+                result = requests.patch(url, data=r.body, headers=r.headers, proxies=self.proxies_cfg())
             return self.parseResponse({"body":result.text, "http_code":result.status_code, "error":""}, requestDataStr)
         except Exception as e:
             return "", 0, str(e)
 
     def put(self, api, query = {}, postData={}, headers = {}):
-        '''PUT请求'''
-        api = api.lstrip("/")
-        orderQuery, orderPostData, headers = self._payload(query=query, postData = postData, headers = headers)
-        bodyQuery = url_encoder(orderQuery)
-
-        api = bodyQuery == "" and "%s/%s" % (self._apiPre, api) or "%s/%s?%s" % (self._apiPre, api, bodyQuery)
+        """PUT请求"""
+        r = self._payload(api, query=query, postData=postData, headers=headers, dataFrom = "PUT")
+        url = r.scheme + "://" + r.host + r.uri
         try:
-            requestDataStr = json.dumps({"url": api, "method": "GET", "data": {}, "headers": headers}, ensure_ascii=False)
+            requestDataStr = json.dumps({"url": url, "method": "PUT", "data": {}, "headers": r.headers}, ensure_ascii=False)
             if self._oldSign:
-                result =  requests.put(api, data=orderPostData, headers=headers, proxies=self.proxies_cfg())
+                result =  requests.put(url, data=r.body, headers=r.headers, proxies=self.proxies_cfg())
             else:
-                result =  requests.put(api, json=orderPostData, headers=headers, proxies=self.proxies_cfg())
+                result =  requests.put(url, data=r.body, headers=r.headers, proxies=self.proxies_cfg())
             return self.parseResponse({"body":result.text, "http_code":result.status_code, "error":""}, requestDataStr)
         except Exception as e:
             return "", 0, str(e)
 
     def delete(self, api, query = {}, postData={}, headers = {}):
         '''DELETE请求'''
-        api = api.lstrip("/")
-        orderQuery, orderPostData, headers = self._payload(query=query, postData = postData, headers = headers)
-        bodyQuery = url_encoder(orderQuery)
-
-        api = bodyQuery == "" and "%s/%s" % (self._apiPre, api) or "%s/%s?%s" % (self._apiPre, api, bodyQuery)
+        r = self._payload(api, query=query, postData=postData, headers=headers, dataFrom = "DELETE")
+        url = r.scheme + "://" + r.host + r.uri
         try:
-            requestDataStr = json.dumps({"url": api, "method": "GET", "data": {}, "headers": headers}, ensure_ascii=False)
+            requestDataStr = json.dumps({"url": url, "method": "DELETE", "data": {}, "headers": r.headers}, ensure_ascii=False)
             if self._oldSign:
-                result = requests.delete(api, data=orderPostData, headers=headers, proxies=self.proxies_cfg())
+                result = requests.delete(url, data=r.body, headers=r.headers, proxies=self.proxies_cfg())
             else:
-                result = requests.delete(api, json=orderPostData, headers=headers, proxies=self.proxies_cfg())
+                result = requests.delete(url, data=r.body, headers=r.headers, proxies=self.proxies_cfg())
             return self.parseResponse({"body":result.text, "http_code":result.status_code, "error":""}, requestDataStr)
         except Exception as e:
             return "", 0, str(e)
 
     def parseResponse(self, result, requestDataStr):
-        '''解析 response'''
+        """解析 response"""
         #body = result['body'].decode('utf-8')
         body = result['body']
         if result['http_code'] == 0:
