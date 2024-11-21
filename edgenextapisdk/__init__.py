@@ -13,7 +13,7 @@ from collections import OrderedDict
 
 from edgenextapisdk import signer
 
-version = "1.0.2"
+version = "1.0.3"
 
 machineIpCount = 0
 machineIp = "0.0.0.0"
