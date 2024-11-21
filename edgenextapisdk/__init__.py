@@ -230,7 +230,7 @@ class Sdk:
         r = self._payload(api, query=query, headers=headers, dataFrom = "GET")
         url = r.scheme + "://" + r.host + r.uri
         requestDataStr = json.dumps({"url": url, "method": "GET", "data": {}, "headers": r.headers}, ensure_ascii=False)
-        print(requestDataStr)
+        # print(requestDataStr)
         try:
             result = requests.get(url, headers=r.headers, proxies=self.proxies_cfg())
             return self.parseResponse({"body":result.text, "http_code":result.status_code, "error":""}, requestDataStr)
