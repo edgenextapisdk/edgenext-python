@@ -1,6 +1,13 @@
 build
 dist
-sdk.egg-info
-/.idea/misc.xml
-/.idea/inspectionProfiles/Project_Default.xml
-/Demo/demo.py
+*.egg-info
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+.DS_Store

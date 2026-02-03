@@ -1,66 +1,86 @@
-# api sdk for python
+# EdgeNext API SDK for Python
 
-### 说明
+A Python SDK for interacting with the EdgeNext API, providing a simple and secure way to make authenticated API requests.
 
-* 接口基地址，如 https://api.local.com/V4/ ，具体请咨询运营人员
-* 接口遵循RESTful,默认请求体json,接口默认返回json
-* app_id, app_secret 联系技术客服，先注册一个的账号，用于申请绑定api身份
+## Description
 
-### 签名算法
+* **Base URL**: The API base URL (e.g., `https://api.local.com/V4/`). Please consult with operations staff for the specific URL.
+* **API Style**: RESTful API, default request body is JSON, default response is JSON.
+* **Authentication**: Contact technical support to register an account and apply for API credentials (`app_id` and `app_secret`).
 
-* 每次请求都签名，保证传输过程数据不被篡改
-* 客户端：sha256签名算法，将参数base64编码+app_secret用sha256签名，每次请求带上签名
-* 服务端：拿到参数用相同的算法签名，对比签名是否正确
+## Signature Algorithm
 
-### sdk 使用说明
+* Every request must be signed to ensure data integrity during transmission.
+* **Client**: Uses SHA256 signature algorithm. Parameters are base64 encoded and signed with `app_secret` using SHA256. Each request includes the signature.
+* **Server**: Uses the same algorithm to sign the parameters and verifies the signature.
 
-* 环境：python >=3.5
-* 支持get/post/patch/put/delete方法
-* 参数说明
-    * app_id 分配的app_id
-    * app_secert 分配的app_secert, 用于签名数据
-    * api_pre api前缀
-    * timeout 请求超时时间，默认10秒，请合理设置
-* 每次调用会返回三个参数：(原始字符串，解析后的json字典，错误字符串)
-* 注意事项
-    针对所有请求，uri与get参数是分离的，如 https://api.local.com/V4/version?v=1, 调用时v=1参数，须通过query传递
-        raw, body, err = sdk.get('version', query={'v': 1})
+## SDK Usage
 
-### 安装
+### Requirements
 
-pip install edgenextapisdk
+* Python >= 3.8
+* Supports GET, POST, PATCH, PUT, DELETE methods
 
-### 使用
+### Parameters
 
+* `app_id`: Your assigned app_id
+* `app_secret`: Your assigned app_secret, used for signing data
+* `api_pre`: API prefix (base URL)
+* `timeout`: Request timeout in seconds (default: 10 seconds). Please set appropriately.
+
+### Return Values
+
+Each method call returns three values: `(raw_string, parsed_json_dict, error_string)`
+
+### Important Notes
+
+For all requests, the URI and GET parameters are separated. For example, for `https://api.local.com/V4/version?v=1`, the `v=1` parameter must be passed via the `query` parameter:
+
+```python
+raw, body, err = sdk.get('version', query={'v': 1})
 ```
-### 实例化 Sdk
+
+## Installation
+
+```bash
+pip install edgenextapisdk
+```
+
+## Usage
+
+### Initialize SDK
+
+```python
 import os
 import logging
 from edgenextapisdk import Sdk
 
-## 添加日志
+# Setup logging
 logger = logging.getLogger()
 formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
 
-##日志输出到文件
+# Log to file
 fileHandle = logging.FileHandler('/tmp/sdk.log', encoding='utf-8')
 fileHandle.setFormatter(formatter)
 logger.addHandler(fileHandle)
 
-##日志输出到stdout
+# Log to stdout
 streamHandle = logging.StreamHandler()
 streamHandle.setFormatter(formatter)
 logger.addHandler(streamHandle)
 
 sdk = Sdk({
-    "app_id": os.environ['SDK_APP_ID'],                ## 业务上使用时，替换为具体的值
-    "app_secert": os.environ['SDK_APP_SECERT'],        ## 业务上使用时，替换为具体的值
-    "api_pre": os.environ['SDK_API_PRE'],              ## 业务上使用时，替换为具体的值
+    "app_id": os.environ['SDK_APP_ID'],                # Replace with your actual value in production
+    "app_secert": os.environ['SDK_APP_SECERT'],        # Replace with your actual value in production
+    "api_pre": os.environ['SDK_API_PRE'],              # Replace with your actual value in production
     "timeout": 30,
-    "logger": logger,               ##如果不需要，此参数可不传
+    "logger": logger,                                   # Optional: omit if logging is not needed
 })
+```
 
-### get 方式请求数据
+### GET Request
+
+```python
 api = 'test.sdk.get'
 query = {
     "page": 1,
@@ -75,83 +95,86 @@ print("api: ", api)
 print("raw: ", raw)
 print("jsonData: ", jsonData)
 print("err: ", err)
-print("")
-
-### post 方式请求数据
-api = 'test.sdk.post'
-query    = {}
-postData = {
-    "name": 1,
-    "age": 10,
-    "data": {
-        "name": "name名称",
-        "domain": "baidu.com",
-    }
-}
-raw, jsonData, err = sdk.post(api, postData = postData, query=query)
-print("api: ", api)
-print("raw: ", raw)
-print("jsonData: ", jsonData)
-print("err: ", err)
-print("")
-
-### patch 方式请求数据
-api = 'test.sdk.patch'
-query    = {}
-postData = {
-    "name": 1,
-    "age": 10,
-    "data": {
-        "name": "name名称",
-        "domain": "baidu.com",
-    }
-}
-raw, jsonData, err = sdk.patch(api, postData = postData, query=query)
-print("api: ", api)
-print("raw: ", raw)
-print("jsonData: ", jsonData)
-print("err: ", err)
-print("")
-
-### put 方式请求数据
-api = 'test.sdk.put'
-query    = {}
-postData = {
-    "name": 1,
-    "age": 10,
-    "data": {
-        "name": "name名称",
-        "domain": "baidu.com",
-    }
-}
-raw, jsonData, err = sdk.put(api, postData = postData, query=query)
-print("api: ", api)
-print("raw: ", raw)
-print("jsonData: ", jsonData)
-print("err: ", err)
-print("")
-
-### delete 方式请求数据
-api = 'test.sdk.delete'
-query    = {}
-postData = {
-    "name": 1,
-    "age": 10,
-    "data": {
-        "name": "name名称",
-        "domain": "baidu.com",
-    }
-}
-raw, jsonData, err = sdk.delete(api, postData = postData, query=query)
-print("api: ", api)
-print("raw: ", raw)
-print("jsonData: ", jsonData)
-print("err: ", err)
-print("")
 ```
 
-### 更新日志
+### POST Request
 
-* 2022.11.09 
+```python
+api = 'test.sdk.post'
+query = {}
+postData = {
+    "name": 1,
+    "age": 10,
+    "data": {
+        "name": "name",
+        "domain": "baidu.com",
+    }
+}
+raw, jsonData, err = sdk.post(api, postData=postData, query=query)
+print("api: ", api)
+print("raw: ", raw)
+print("jsonData: ", jsonData)
+print("err: ", err)
+```
 
-完成python版SDK开发
+### PATCH Request
+
+```python
+api = 'test.sdk.patch'
+query = {}
+postData = {
+    "name": 1,
+    "age": 10,
+    "data": {
+        "name": "name",
+        "domain": "baidu.com",
+    }
+}
+raw, jsonData, err = sdk.patch(api, postData=postData, query=query)
+print("api: ", api)
+print("raw: ", raw)
+print("jsonData: ", jsonData)
+print("err: ", err)
+```
+
+### PUT Request
+
+```python
+api = 'test.sdk.put'
+query = {}
+postData = {
+    "name": 1,
+    "age": 10,
+    "data": {
+        "name": "name",
+        "domain": "baidu.com",
+    }
+}
+raw, jsonData, err = sdk.put(api, postData=postData, query=query)
+print("api: ", api)
+print("raw: ", raw)
+print("jsonData: ", jsonData)
+print("err: ", err)
+```
+
+### DELETE Request
+
+```python
+api = 'test.sdk.delete'
+query = {}
+postData = {
+    "name": 1,
+    "age": 10,
+    "data": {
+        "name": "name",
+        "domain": "baidu.com",
+    }
+}
+raw, jsonData, err = sdk.delete(api, postData=postData, query=query)
+print("api: ", api)
+print("raw: ", raw)
+print("jsonData: ", jsonData)
+print("err: ", err)
+```
+
+## Changelog
