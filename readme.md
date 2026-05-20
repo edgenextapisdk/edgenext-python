@@ -78,6 +78,38 @@ sdk = Sdk({
 })
 ```
 
+### EdgeNext API Method Wrapper
+
+The SDK also provides `EdgeNextClient`, which wraps documented EdgeNext V5 APIs as Python methods. The old low-level `Sdk.get/post/put/delete/patch` calls are still available.
+
+```python
+import os
+from edgenextapisdk import EdgeNextClient
+
+client = EdgeNextClient.from_config({
+    "app_id": os.environ["SDK_APP_ID"],
+    "app_secert": os.environ["SDK_APP_SECERT"],
+    "api_pre": os.environ["SDK_API_PRE"],
+    "timeout": 30,
+})
+
+raw, body, err = client.list_domains(
+    query={"page": 1, "page_size": 20},
+    headers={"X-Lang": "en"},
+)
+
+raw, body, err = client.add_domains(
+    body={"domain": "www.example.com"},
+    headers={"X-Lang": "en"},
+)
+```
+
+Generated method names are snake_case versions of the API document `@apiName`, for example `ListDomains` becomes `list_domains` and `AddDomains` becomes `add_domains`. Every method accepts `query`, `body`, `headers`, and optional `method` for APIs documented with multiple HTTP methods. You can also call by the original API name:
+
+```python
+raw, body, err = client.call_api("ListDomains", query={"page": 1})
+```
+
 ### GET Request
 
 ```python

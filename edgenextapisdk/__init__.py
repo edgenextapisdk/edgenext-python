@@ -12,6 +12,8 @@ from urllib.parse import urlencode
 from collections import OrderedDict
 
 from edgenextapisdk import signer
+from edgenextapisdk.client import EdgeNextClient
+from edgenextapisdk.requests import *
 
 version = "1.0.3"
 
@@ -314,5 +316,5 @@ class Sdk:
                 if self._logger is not None: self._logger.error('the response body is not json, responseBody: %s requestData: %s' % (body, requestDataStr))
                 return body, {}, 'the response body is not json'
 
-__all__ = ["get_machine_ip", "Sdk"]
+__all__ = ["get_machine_ip", "Sdk", "EdgeNextClient"]
 
