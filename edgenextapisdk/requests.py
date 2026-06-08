@@ -5687,7 +5687,7 @@ class FirewallSavePolicyRequest(BaseRequest):
     PATH = '/api/v5/firewall.policy.save'
     PARAMS = ({'in': 'body', 'type': 'Number', 'name': 'id', 'required': True, 'default': None, 'description': '策略ID, 针对更新'}, {'in': 'body', 'type': 'Number', 'name': 'business_id', 'required': True, 'default': None, 'description': '模板ID'}, {'in': 'body', 'type': 'Number', 'name': 'package_id', 'required': True, 'default': None, 'description': '套餐ID, 仅针对 type=tcp'}, {'in': 'body', 'type': 'String=tcp,app,ssl,plus', 'name': 'product_flag', 'required': False, 'default': 'plus', 'description': '产品标识'}, {'in': 'body', 'type': 'Number', 'name': 'group_id', 'required': True, 'default': None, 'description': '策略集ID'}, {'in': 'body', 'type': 'Number', 'name': 'tjkd_app_id', 'required': True, 'default': None, 'description': '抗D APP ID, 仅针对 type=app, tjkd_app_id是前端传参数的名字, 对应的字段是app_id, app_id与框架的key冲突'}, {'in': 'body', 'type': 'String', 'name': 'from', 'required': True, 'default': None, 'description': '来源：aR防倒链 zL区域屏蔽 sP源站保护 cc防CC botBot管理 diy自定义 batch批量配置; 常规添加的策略来源只能是diy'}, {'in': 'body', 'type': 'String', 'name': 'remark', 'required': True, 'default': None, 'description': '备注'}, {'in': 'body', 'type': 'String', 'name': 'type', 'required': True, 'default': None, 'description': '策略类型：cdn(云加速)/plus(抗D，红网)/tcp(四层转发)/ssl(https防护)'}, {'in': 'body', 'type': 'String', 'name': 'use_type', 'required': True, 'default': None, 'description': '实际使用的规则类型：cdn(云加速)/plus(抗D，红网)/tcp(四层转发)'}, {'in': 'body', 'type': 'String', 'name': 'action', 'required': True, 'default': None, 'description': '处理⽅式: anticc(通用)/block(封禁)/deny(阻断)/pass(放行)/watch(观察); anticc只针对cdn/plus; 抗D APP只有deny/pass/watch三种，且无action_data'}, {'in': 'body', 'type': 'Object', 'name': 'action_data', 'required': True, 'default': None, 'description': '处理⽅式, 对应的数据'}, {'in': 'body', 'type': 'String', 'name': 'action_data.level', 'required': True, 'default': None, 'description': 'CC防护等级，针对 通用 处理方式，: default(默认)/normal(普通)/strict(严格)/captcha(验证码)'}, {'in': 'body', 'type': 'Number', 'name': 'action_data.next_rules', 'required': True, 'default': None, 'description': '是否继续执行下一规则集，针对 观察/放行/人机验证/蜜网牵引 处理方式：0否 1是'}, {'in': 'body', 'type': 'Number', 'name': 'action_data.interval', 'required': True, 'default': None, 'description': '有效期，针对 封禁/加白 处理方式'}, {'in': 'body', 'type': 'String', 'name': 'action_data.time_unit', 'required': True, 'default': None, 'description': '封禁时间单位: day(天)/hour(时)/minute(分)/second(秒)，针对 封禁 处理方式；注意：加白处理方式没有时间单位，加白只支持秒'}, {'in': 'body', 'type': 'String', 'name': 'action_data.type', 'required': True, 'default': None, 'description': '验证类型，针对 人机验证 处理方式：cookie(Cookie验证)/js(JS验证)/captcha(智能验证码)'}, {'in': 'body', 'type': 'Number', 'name': 'action_data.cc', 'required': True, 'default': None, 'description': '是否继续执行CC，针对 放行/蜜网牵引 处理方式：0不执行  1执行'}, {'in': 'body', 'type': 'Number', 'name': 'action_data.waf', 'required': True, 'default': None, 'description': '是否执行WAF，针对 放行/加白/蜜网牵引 处理方式：0不执行  1执行'}, {'in': 'body', 'type': 'String[]', 'name': 'action_data.group_ids', 'required': True, 'default': None, 'description': '域名组ID，相同的处置方式应用于域名组内的所有域名，针对 加白 处理方式'}, {'in': 'body', 'type': 'String', 'name': 'action_data.protocol', 'required': True, 'default': None, 'description': '请求蜜网服务器的协议，针对 蜜网牵引 处理方式：http/https'}, {'in': 'body', 'type': 'String', 'name': 'action_data.ip', 'required': True, 'default': None, 'description': '蜜网服务器的IP，针对 蜜网牵引 处理方式'}, {'in': 'body', 'type': 'String', 'name': 'action_data.port', 'required': True, 'default': None, 'description': '蜜网服务器的端口，针对 蜜网牵引 处理方式'}, {'in': 'body', 'type': 'String', 'name': 'action_data.redirect_url', 'required': True, 'default': None, 'description': '重定向URL，针对 重定向 处理方式'}, {'in': 'body', 'type': 'Object', 'name': 'rules', 'required': True, 'default': None, 'description': '规则数据，关于规则的各种定义及描述，请查看 获取可用规则(firewall.pagecfg)接口'}, {'in': 'body', 'type': 'String', 'name': 'rules.rule_type', 'required': True, 'default': None, 'description': '规则类型, 根据业务而不同，关于规则的各种定义及描述，请查看 获取可用规则(firewall.pagecfg)接口'}, {'in': 'body', 'type': 'String', 'name': 'rules.logic', 'required': True, 'default': None, 'description': '罗辑运算，每个规则能用的逻辑操作，请查看 获取可用规则(firewall.pagecfg) 接口'}, {'in': 'body', 'type': 'Object', 'name': 'rules.data', 'required': True, 'default': None, 'description': '规则运算对应的数据，示例中已给出所有 规则-逻辑-数据 的对应关系；请根据自己的需要复制示例参数。'})
 
-    def __init__(self, id=_UNSET, business_id=_UNSET, package_id=_UNSET, group_id=_UNSET, tjkd_app_id=_UNSET, from=_UNSET, remark=_UNSET, type=_UNSET, use_type=_UNSET, action=_UNSET, action_data=_UNSET, rules=_UNSET, product_flag='plus', query=None, body=None, headers=None, **kwargs):
+    def __init__(self, id=_UNSET, business_id=_UNSET, package_id=_UNSET, group_id=_UNSET, tjkd_app_id=_UNSET, from_=_UNSET, remark=_UNSET, type=_UNSET, use_type=_UNSET, action=_UNSET, action_data=_UNSET, rules=_UNSET, product_flag='plus', query=None, body=None, headers=None, **kwargs):
         super().__init__(query=query, body=body, headers=headers)
         if id is not _UNSET:
             self.body['id'] = id
@@ -5699,8 +5699,8 @@ class FirewallSavePolicyRequest(BaseRequest):
             self.body['group_id'] = group_id
         if tjkd_app_id is not _UNSET:
             self.body['tjkd_app_id'] = tjkd_app_id
-        if from is not _UNSET:
-            self.body['from'] = from
+        if from_ is not _UNSET:
+            self.body['from'] = from_
         if remark is not _UNSET:
             self.body['remark'] = remark
         if type is not _UNSET:
@@ -5904,7 +5904,7 @@ class FirewallSavePolicyGroupRequest(BaseRequest):
     PATH = '/api/v5/firewall.policyGroup.save'
     PARAMS = ({'in': 'body', 'type': 'Number', 'name': 'id', 'required': True, 'default': None, 'description': '策略集ID, 针对更新'}, {'in': 'body', 'type': 'Number', 'name': 'business_id', 'required': True, 'default': None, 'description': '模板ID'}, {'in': 'body', 'type': 'String', 'name': 'from', 'required': False, 'default': 'diy', 'description': '策略集来源：aR防倒链 zL区域屏蔽 sP源站保护 cc防CC botBot管理 diy自定义 batch批量配置'}, {'in': 'body', 'type': 'String', 'name': 'remark', 'required': True, 'default': None, 'description': '备注'}, {'in': 'body', 'type': 'String', 'name': 'name', 'required': True, 'default': None, 'description': '名称'})
 
-    def __init__(self, id=_UNSET, business_id=_UNSET, remark=_UNSET, name=_UNSET, from='diy', query=None, body=None, headers=None, **kwargs):
+    def __init__(self, id=_UNSET, business_id=_UNSET, remark=_UNSET, name=_UNSET, from_='diy', query=None, body=None, headers=None, **kwargs):
         super().__init__(query=query, body=body, headers=headers)
         if id is not _UNSET:
             self.body['id'] = id
@@ -5914,7 +5914,7 @@ class FirewallSavePolicyGroupRequest(BaseRequest):
             self.body['remark'] = remark
         if name is not _UNSET:
             self.body['name'] = name
-        self.body['from'] = from
+        self.body['from'] = from_
         for key, value in kwargs.items():
             self.body[key] = value
 
@@ -6484,12 +6484,12 @@ class FirewallSavePolicyGroupRegionalShieldingRequest(BaseRequest):
     PATH = '/api/v5/firewall.policyGroup.save'
     PARAMS = ({'in': 'body', 'type': 'Number', 'name': 'business_id', 'required': True, 'default': None, 'description': '模板ID'}, {'in': 'body', 'type': 'String=zL', 'name': 'from', 'required': True, 'default': None, 'description': '策略集来源，固定为zL（区域屏蔽）'}, {'in': 'body', 'type': 'String=zL', 'name': 'name', 'required': True, 'default': None, 'description': '名称，固定为zL（区域屏蔽）'})
 
-    def __init__(self, business_id=_UNSET, from=_UNSET, name=_UNSET, query=None, body=None, headers=None, **kwargs):
+    def __init__(self, business_id=_UNSET, from_=_UNSET, name=_UNSET, query=None, body=None, headers=None, **kwargs):
         super().__init__(query=query, body=body, headers=headers)
         if business_id is not _UNSET:
             self.body['business_id'] = business_id
-        if from is not _UNSET:
-            self.body['from'] = from
+        if from_ is not _UNSET:
+            self.body['from'] = from_
         if name is not _UNSET:
             self.body['name'] = name
         for key, value in kwargs.items():
@@ -6512,12 +6512,12 @@ class FirewallSavePolicyGroupAntiLeechRequest(BaseRequest):
     PATH = '/api/v5/firewall.policyGroup.save'
     PARAMS = ({'in': 'body', 'type': 'Number', 'name': 'business_id', 'required': True, 'default': None, 'description': '模板ID'}, {'in': 'body', 'type': 'String=aR', 'name': 'from', 'required': True, 'default': None, 'description': '策略集来源，固定为aR（防盗链）'}, {'in': 'body', 'type': 'String=aR', 'name': 'name', 'required': True, 'default': None, 'description': '名称，固定为aR（防盗链）'})
 
-    def __init__(self, business_id=_UNSET, from=_UNSET, name=_UNSET, query=None, body=None, headers=None, **kwargs):
+    def __init__(self, business_id=_UNSET, from_=_UNSET, name=_UNSET, query=None, body=None, headers=None, **kwargs):
         super().__init__(query=query, body=body, headers=headers)
         if business_id is not _UNSET:
             self.body['business_id'] = business_id
-        if from is not _UNSET:
-            self.body['from'] = from
+        if from_ is not _UNSET:
+            self.body['from'] = from_
         if name is not _UNSET:
             self.body['name'] = name
         for key, value in kwargs.items():

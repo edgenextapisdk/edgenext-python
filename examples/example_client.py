@@ -10,14 +10,14 @@ client = EdgeNextClient.from_config({
     "timeout": 30,
 })
 
-raw, body, err = client.list_domains(ListDomainsRequest(
+body = client.list_domains(ListDomainsRequest(
     page=1,
     page_size=20,
     headers={"X-Lang": "en"},
 ))
-print(raw, body, err)
+print(body)
 
-raw, body, err = client.add_domains(AddDomainsRequest(
+body = client.add_domains(AddDomainsRequest(
     domain="www.example.com",
     group_id=0,
     origins=[{
@@ -36,8 +36,8 @@ raw, body, err = client.add_domains(AddDomainsRequest(
     protect_status="scdn",
     headers={"X-Lang": "en"},
 ))
-print(raw, body, err)
+print(body)
 
 # Low-level dict calls remain supported for compatibility.
-raw, body, err = client.call_api("ListDomains", query={"page": 1})
-print(raw, body, err)
+body = client.call_api("ListDomains", query={"page": 1})
+print(body)

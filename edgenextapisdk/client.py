@@ -39,17 +39,26 @@ class EdgeNextClient:
         headers: extra request headers
         method: optional override for endpoints documented with multiple methods
 
-    Return value is exactly the base Sdk tuple: (raw_string, parsed_json, error).
+    Generated endpoint methods return the parsed API response body directly.
+    Transport, parse, and business errors are raised as APIError.
     """
 
-    def __init__(self, sdk):
+    def __init__(self, sdk, default_headers=None):
         self.sdk = sdk
+        self.default_headers = dict(default_headers or {})
 
     @classmethod
-    def from_config(cls, params=None, oldSign=False):
+    def from_config(cls, params=None, oldSign=False, default_headers=None):
         from edgenextapisdk import Sdk
 
-        return cls(Sdk(params or {}, oldSign=oldSign))
+        return cls(Sdk(params or {}, oldSign=oldSign), default_headers=default_headers)
+
+    def set_default_header(self, key, value):
+        self.default_headers[key] = value
+        return self
+
+    def set_language(self, lang):
+        return self.set_default_header("X-Lang", lang)
 
     @property
     def api_definitions(self):
@@ -86,7 +95,8 @@ class EdgeNextClient:
 
         query = query or {}
         body = body or {}
-        headers = headers or {}
+        explicit_headers = headers or {}
+        headers = dict(self.default_headers)
         if isinstance(request, BaseRequest):
             if request.API_NAME and request.API_NAME != definition["api_name"]:
                 raise ValueError(
@@ -96,27 +106,56 @@ class EdgeNextClient:
             request_query, request_body, request_headers = request.to_request_parts()
             query = dict(request_query, **query)
             body = dict(request_body, **body)
-            headers = dict(request_headers, **headers)
+            headers = dict(headers, **request_headers)
             if method is None and request.METHOD:
-                selected = request.METHOD
+                selected = request.METHOD.upper()
         elif request is not None:
             if selected == "GET":
                 query = dict(request, **query)
             else:
                 body = dict(request, **body)
+        headers = dict(headers, **explicit_headers)
 
         api = _api_path_to_sdk_api(definition["path"], getattr(self.sdk, "_apiPre", ""))
         if selected == "GET":
-            return self.sdk.get(api, query=query, headers=headers)
+            if body:
+                query = dict(body, **query)
+            return self._call_sdk(self.sdk.get, api, query=query, headers=headers)
         if selected == "POST":
-            return self.sdk.post(api, query=query, postData=body, headers=headers)
+            return self._call_sdk(self.sdk.post, api, query=query, postData=body, headers=headers)
         if selected == "PUT":
-            return self.sdk.put(api, query=query, postData=body, headers=headers)
+            return self._call_sdk(self.sdk.put, api, query=query, postData=body, headers=headers)
         if selected == "PATCH":
-            return self.sdk.patch(api, query=query, postData=body, headers=headers)
+            return self._call_sdk(self.sdk.patch, api, query=query, postData=body, headers=headers)
         if selected == "DELETE":
-            return self.sdk.delete(api, query=query, postData=body, headers=headers)
+            return self._call_sdk(self.sdk.delete, api, query=query, postData=body, headers=headers)
         raise ValueError("unsupported HTTP method: %s" % selected)
+
+
+    def _call_sdk(self, fn, *args, **kwargs):
+        raw, body, err = fn(*args, **kwargs)
+        if err:
+            raise APIError(message=err, response=body, raw=raw)
+        status = body.get("status") if isinstance(body, dict) else None
+        code = status.get("code") if isinstance(status, dict) else None
+        message = status.get("message") if isinstance(status, dict) else ""
+        if code is not None and code != 1:
+            raise APIError(code=code, message=message, response=body, raw=raw)
+        return body
+
+
+class APIError(Exception):
+    """Error raised by the generated EdgeNext wrapper client."""
+
+    def __init__(self, code=None, message="", response=None, raw=""):
+        self.code = code
+        self.message = message or "api error"
+        self.response = response
+        self.raw = raw
+        if code is None:
+            super().__init__(self.message)
+        else:
+            super().__init__("%s (code: %s)" % (self.message, code))
 
 
 def _make_endpoint_method(definition):
@@ -144,4 +183,4 @@ for _definition in API_DEFINITIONS:
     setattr(EdgeNextClient, _definition["method_name"], _make_endpoint_method(_definition))
 
 
-__all__ = ["EdgeNextClient"]
+__all__ = ["EdgeNextClient", "APIError"]

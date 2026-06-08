@@ -84,30 +84,30 @@ The SDK also provides `EdgeNextClient`, which wraps documented EdgeNext V5 APIs 
 
 ```python
 import os
-from edgenextapisdk import EdgeNextClient
+from edgenextapisdk import AddDomainsRequest, EdgeNextClient, ListDomainsRequest
 
 client = EdgeNextClient.from_config({
     "app_id": os.environ["SDK_APP_ID"],
     "app_secert": os.environ["SDK_APP_SECERT"],
     "api_pre": os.environ["SDK_API_PRE"],
     "timeout": 30,
-})
+}).set_language("en")
 
-raw, body, err = client.list_domains(
-    query={"page": 1, "page_size": 20},
-    headers={"X-Lang": "en"},
-)
+list_result = client.list_domains(ListDomainsRequest(
+    page=1,
+    page_size=20,
+))
 
-raw, body, err = client.add_domains(
-    body={"domain": "www.example.com"},
-    headers={"X-Lang": "en"},
-)
+add_result = client.add_domains(AddDomainsRequest(
+    domain="www.example.com",
+    group_id=1,
+))
 ```
 
-Generated method names are snake_case versions of the API document `@apiName`, for example `ListDomains` becomes `list_domains` and `AddDomains` becomes `add_domains`. Every method accepts `query`, `body`, `headers`, and optional `method` for APIs documented with multiple HTTP methods. You can also call by the original API name:
+Generated method names are snake_case versions of the API document `@apiName`, for example `ListDomains` becomes `list_domains` and `AddDomains` becomes `add_domains`. Wrapper methods return the parsed apidoc response body directly. Transport, parse, and business errors are raised as `APIError`. The low-level `query`, `body`, `headers`, and optional `method` arguments are still available for compatibility. You can also call by the original API name:
 
 ```python
-raw, body, err = client.call_api("ListDomains", query={"page": 1})
+result = client.call_api("ListDomains", query={"page": 1})
 ```
 
 ### GET Request
